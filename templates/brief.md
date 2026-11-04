@@ -11,7 +11,8 @@ Do not touch: <其他在岗泳道的文件，逐条列>
 Plan: required | exempt: <豁免理由，见 CREW.md 规则11>
 Scope: <干什么，一段话；验收标准写清楚>
 
-开工三步：
+开工四步：
+0. 环境初始化：按仓库约定装依赖（如 `uv sync` / `cd shell && npm install`）——REQUIRED_CHECKS 依赖它们，裸依赖跑检查必红
 1. 读 D:/projects/live-cockpit-crew/CREW.md（契约）与你所在仓库的 AGENTS.md（纪律）
 2. 首次汇报第一行发机械行：LANE <code> onboarded crew=live-cockpit base=master head=<sha12> drive-ok=<yes|no>
 3. Plan: required 时，先报大白话计划等批准再动产品代码；exempt 直接干

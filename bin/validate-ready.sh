@@ -9,7 +9,7 @@
 set -u
 READY_FILE="${1:?用法: validate-ready.sh <ready文件> [项目盘目录]}"
 DRIVE="${2:-${CREW_DRIVE:-$PWD}}"
-[ -f "$DRIVE/CREW.md" ] || DRIVE="$(cd "$(dirname "$0")/../.." && pwd)"   # bin/ 的上一级
+[ -f "$DRIVE/CREW.md" ] || DRIVE="$(cd "$(dirname "$0")/.." && pwd)"      # bin/ 的上一级（盘根）
 [ -f "$DRIVE/CREW.md" ] || { echo "READY-REJECT 找不到项目盘 CREW.md（试过: $DRIVE）"; exit 1; }
 CREW="$DRIVE/CREW.md"
 REJECTS=()
@@ -27,8 +27,12 @@ CHECK_NAMES="$(crew_param CHECK_NAMES)"
 [ -n "$BASE" ] || REJECTS+=("CREW.md 缺 BASE 参数行")
 [ -d "$REPO_PATH" ] || REJECTS+=("REPO_PATH 目录不存在: $REPO_PATH")
 
-# --- 读取 READY 文件 ---
+# --- 读取 READY 文件（显式剥 ，防 CRLF 在非 gawk 环境误判）---
 [ -f "$READY_FILE" ] || { echo "READY-REJECT 文件不存在: $READY_FILE"; exit 1; }
+READY_NORM="$(mktemp)"
+trap 'rm -f "$READY_NORM"' EXIT
+tr -d '' < "$READY_FILE" > "$READY_NORM"
+READY_FILE="$READY_NORM"
 READY_HEAD_LINE="$(grep -m1 '^READY ' "$READY_FILE")"
 [ -n "$READY_HEAD_LINE" ] || { echo "READY-REJECT 缺少首行 'READY <branch> <sha40>'"; exit 1; }
 
@@ -37,6 +41,7 @@ SHA="$(awk '{print $3}' <<<"$READY_HEAD_LINE")"
 
 # --- 字段格式 ---
 [[ "$BRANCH" =~ ^[A-Za-z0-9/._-]+$ ]] || REJECTS+=("分支名含非法字符: $BRANCH")
+[ -n "$BASE" ] && [ "$BRANCH" = "$BASE" ] && REJECTS+=("交单分支不得是 BASE（$BASE 自身无可合并内容）")
 [[ "$SHA" =~ ^[0-9a-f]{40}$ ]] || REJECTS+=("头 SHA 不是 40 位十六进制: '$SHA'")
 
 PIN="$(grep -m1 '^pin:' "$READY_FILE" | awk '{print $2}')"
@@ -57,11 +62,14 @@ else
   for NAME in $CHECK_NAMES; do
     NAME="$(sed 's/^[[:space:]]*//; s/[[:space:]]*$//' <<<"$NAME")"
     [ -n "$NAME" ] || continue
-    grep -q "$NAME=green" <<<"$CHECKS_LINE" \
+    grep -qE "(^|[[:space:]])${NAME}=green([[:space:]]|$)" <<<"$CHECKS_LINE" \
       || REJECTS+=("checks 缺 $NAME=green（或非绿）: '$CHECKS_LINE'")
   done
   IFS="$OLDIFS"
 fi
+
+grep -m1 -q '^test-count:' "$READY_FILE" || REJECTS+=("缺少 test-count: 行（通过数/失败数）")
+grep -m1 -q '^review passes:' "$READY_FILE" || REJECTS+=("缺少 review passes: 行（审查轮次）")
 
 grep -qi '^Head frozen from now on' "$READY_FILE" || REJECTS+=("缺少头冻结声明行")
 
