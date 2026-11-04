@@ -2,6 +2,10 @@
 
 给 CONTROLLER 用。加载 gstack `/captain` 技能后按本手册落地执行；手册与 CREW.md 冲突时以 CREW.md 为准并报告用户。占位符在装配时按 CREW.md 填实。
 
+## 复审纪律（2026-11-04 土豆定：有改动就再审）
+
+凡体系文件改动（CREW / runbook / 模板 / 验证器 / 插件 / 全局路由规则），改动落地后**必须派只读复审泳道再审改动面**（任务包模式同 handoffs/re-audit-2026-11-04.md），复审合格才算改动完成。流程类文件的修改另须按 runbook Lesson 做 git 语义推演；有 scratch 仓库条件的命令须真跑。
+
 ## 派单模式选择
 
 派工前先答：**「这个活需要结果回到我这里吗？」** 需要 → 监督式（`orca orchestration worker-start`，工人发 worker_done，Orca 唤醒队长，零轮询）；不需要 → 移交式（`orca worktree create --prompt`，派完即忘不等待）。反例：要报告的活误用移交式会被迫挂轮询补坑。
