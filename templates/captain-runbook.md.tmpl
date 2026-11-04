@@ -1,6 +1,10 @@
-# 队长操作手册（captain runbook · <CREW_NAME>）
+# 队长操作手册（captain runbook · live-cockpit 本地版）
 
-给 CONTROLLER 用。加载 gstack `/captain` 技能后按本手册落地执行；手册与 CREW.md 冲突时以 CREW.md 为准并报告用户。占位符在装配时按 CREW.md 填实。
+给 CONTROLLER（工位 A 主 agent）用。加载 gstack `/captain` 技能后按本手册落地执行；手册与 CREW.md 冲突时以 CREW.md 为准并报告土豆。
+
+## 派单模式选择
+
+派工前先答：**「这个活需要结果回到我这里吗？」** 需要 → 监督式（`orca orchestration worker-start`，工人发 worker_done，Orca 唤醒队长，零轮询）；不需要 → 移交式（`orca worktree create --prompt`，派完即忘不等待）。反例：要报告的活误用移交式会被迫挂轮询补坑。
 
 ## ⓪ 双框架统筹流程（superpowers × gstack，2026-11-04 定）
 
@@ -10,8 +14,9 @@
 需求磨清（superpowers /brainstorming 或 gstack /office-hours 任一，先到先跑不重复）
   ↓ 结论落盘 docs/plans/（做什么 + 做成什么样）
 ★ 战略评审（gstack /autoplan 或 /plan-eng-review）——「应不应该做？值不值得？」★ 必须在拆任务之前（豁免判定按 brief 粗估任务数）
-   ├─ 不通过 → 带评审意见退回磨需求修订，重审；两次不过 → 升级用户拍板
   ↓ 通过
+  ├─ 不通过 → 带评审意见退回磨需求修订，重审；两次不过 → 升级土豆拍板
+  ↓
 技术精炼 + 拆解（superpowers /writing-plans → TDD 任务清单）→ 计划落盘
   ↓
 队长按任务拆泳道派工（每张任务书内注明主导手艺：gstack 或 superpowers，单一主导防混巢）
@@ -39,14 +44,14 @@ READY → validate → 列车 → /review 关卡 → /ship
 **防混巢硬规则**：
 - 同一阶段内不混跑两家的技能（先定主导再开工）
 - 不同框架的子代理永不嵌套
-- 文件领地：superpowers 的计划/spec 放 `docs/superpowers/`；gstack 状态归 `~/.gstack/`；crew 状态归项目盘——三家产物不混放
+- 文件领地：superpowers 的计划/spec 放 `docs/superpowers/`；gstack 状态归 `~/.gstack/`；crew 状态归本项目盘——三家产物不混放
 
 **计划保真**（实现偏离计划时）：**在偏离的同一提交里修计划**——替换被取代的段落（不在下面追加修正），保留放弃原因，延期项必须带触发条件。「描述没人造过的东西的计划比没计划更糟：过期是被动的，自信地错误是主动伤害。」（源自 Paretofilm plan-fidelity，思路借用）
 
 ## 0. 每轮开工
 
-1. 读 `DRIVE/DIGEST.md` 与 `DRIVE/NOTES.md` 末尾
-2. 有 `Needs you` 未决项 → 先处理或按规则 12 上报用户
+1. 读 `DRIVE/DIGEST.md`（看板）与 `DRIVE/NOTES.md` 末尾（日志尾巴）
+2. 有 `Needs you` 未决项 → 先处理或按规则 12 上报土豆
 
 ## 1. 派泳道
 
@@ -55,69 +60,75 @@ orca worktree create --name <任务名> --parent-worktree active --agent claude 
   --prompt "<按 templates/brief.md 填好的任务书全文>" --json
 ```
 
-- 派单后：DIGEST 的 In progress 加一行；NOTES 记 `LANE <code> started`
-- 跨家族派工：`--agent codex` 等，任务书不变（纪律在仓库 AGENTS.md 自动加载）
-- 独占资源（PORTS 参数）：派单前查 DIGEST 裁决，回执写明
+- 派单后：DIGEST.md 的 In progress 加一行；NOTES.md 记 `LANE <code> started`
+- 跨家族派工（Codex/OpenCode）：`--agent codex` 等，任务书不变（纪律在仓库 AGENTS.md，自动加载）
+- 泳道要占 9121：先查 DIGEST 有无他泳道占用，裁好后回执
 
 ## 2. 收 READY
 
-> 发车前守则：READY 的 pin 是唯一上车凭证。
+1. 收到 READY 块 → 落盘 `DRIVE/handoffs/ready-<code>-<序号>.txt`（原样保存，含全部行）
+2. 机械验证：`bash DRIVE/bin/validate-ready.sh <该文件>`（仓库路径默认主检出）
+3. `READY-VALID` → NOTES 记一行，DIGEST 的 New 区记「READY <branch> <sha12>，等列车」
+4. `READY-REJECT` → 打回泳道并附 REJECT 原因行原文，按两种情况执行：
+   - 泳道还活着 → `orca terminal send` 打回，修完重交
+   - 泳道已销毁 → 队长按原 brief 重派（DIGEST 记 rejected→redispatched），READY 存档保留作废
 
-1. 收到 READY 块 → 落盘 `DRIVE/handoffs/ready-<code>-<序号>.txt`（原样保存）
-2. 机械验证：`bash DRIVE/bin/validate-ready.sh <该文件> DRIVE`
-3. `READY-VALID` → NOTES 记一行；`READY-REJECT` → 打回泳道附原因原文，修完重交
+## 3. 开合并列车（本地版）
 
-## 3. 开合并列车（本地无远端版）
-
-前置：READY 数 ≥1 且队长判断可发车。
+前置：READY 数 ≥1 且队长判断可发车（凑满 TRAIN_MAX=3 或时机合适）。
 
 ```bash
 # ⓪ 发车前逐槽重验（防冻结后再 push）：
-for f in <DRIVE>/handoffs/ready-*.txt; do bash <DRIVE>/bin/validate-ready.sh "$f" <DRIVE> || 撤该槽; done
+for f in DRIVE/handoffs/ready-*.txt; do bash DRIVE/bin/validate-ready.sh "$f" DRIVE || 撤该槽; done
 
-# ① 建 scratch 列车工作区（从 BASE 起，干净；上次残留先清：git -C <REPO_PATH> worktree remove <TRAIN_WT> --force）
-git -C <REPO_PATH> worktree add <TRAIN_WT> <BASE>
+# ① 建 scratch 列车工作区（干净，从 master 起；上次残留先清：worktree remove --force）
+git -C D:/projects/live-cockpit worktree add D:/projects/live-cockpit-train master
 
 # ② 按 DIGEST 顺序逐槽并入 READY 的 pin SHA（不合分支名！冻结后 pin 之外的任何新头一律不上车）
-cd <TRAIN_WT> && git merge --no-ff <pin1.sha40> && git merge --no-ff <pin2.sha40> …
+cd D:/projects/live-cockpit-train
+git merge --no-ff <pin1.sha40> && git merge --no-ff <pin2.sha40> && git merge --no-ff <pin3.sha40>
 
-# ③ 列车头跑一次全量门（FULL_GATE_CHECK，一次顶全部槽位）
-<全量检查命令>
+# ③ 列车头跑一次全量门（REQUIRED_CHECKS，一次顶全部槽位）
+uv run pytest -m "not win32"
+cd shell && npm test
 
-# ②.5 交货关卡：列车头对 BASE..列车头 diff 跑 /review（in-diff 范围）——发现问题打回涉事槽位重建
-#     （无远端时 gstack /ship 原义不适用；本地等价 = 列车门全量测试 + ②.5 审查 + ④ 落库后 NOTES 记录）
+# ②.5 交货关卡：列车头对 master..列车头 diff 跑 /review（in-diff 范围）——发现问题打回涉事槽位重建
+#     （本地无远端无 PR，gstack /ship 原义不适用；本地等价 = 列车门全量测试 + ②.5 审查 + ④ 落库后 NOTES 记录）
 
-# ④ 全绿 → 逐槽正式落进 BASE（主检出执行）
-git -C <REPO_PATH> merge --no-ff <分支1> && …
+# ④ 全绿 → 逐槽正式落进 master（主检出执行）
+git -C D:/projects/live-cockpit merge --no-ff <分支1>
+git -C D:/projects/live-cockpit merge --no-ff <分支2>
+git -C D:/projects/live-cockpit merge --no-ff <分支3>
 
-# ⑤ 红了 → 二分：去嫌疑槽位重建重跑门，最多一次；仍红 → FREEZE 记 INCIDENT，涉事槽打回，其余可先落
+# ⑤ 红了 → 二分：去掉嫌疑槽位重建列车重跑门；最多重建一次
+#    仍红 → FREEZE（NOTES 记 INCIDENT），涉事槽位打回泳道，其余槽位可先落
 
-# ⑥ 收尾
-git -C <REPO_PATH> worktree remove <TRAIN_WT> --force
+# ⑥ 收尾：销毁列车工作区
+git -C D:/projects/live-cockpit worktree remove D:/projects/live-cockpit-train --force
 ```
 
-- ④ 后通知各泳道「已并入 <BASE>@<新sha12>」，泳道可销毁/复用工作区（Orca `worktree rm`）
-- NOTES 逐槽记 `MERGED <branch> (<sha12>)`；DIGEST 移除对应行
+- ④ 之后：通知各泳道「已并入 master@<新sha12>」，泳道即可销毁/复用其工作区（Orca `worktree rm`）
+- NOTES 逐槽记 `MERGED <branch> (<sha12>)`；DIGEST 的 In progress 移除对应行
 
 ## 4. 冲突处理
 
-- 列车 merge 冲突 = 真代码冲突：不替泳道改产品代码，打回泳道先并最新 BASE 解决后**重跑检查重交 READY**
-- 所有权冲突（两泳道同文件）= 派单失误：FREEZE 新派单，改 Owns 清单，NOTES 记 INCIDENT
+- 列车 merge 冲突 = 真代码冲突：不替泳道改产品代码；按 CREW 规则（对齐 gstack 规则 14）把冲突分支打回泳道，令其先并最新 master 解决后**重跑检查、重交 READY**
+- 文件所有权冲突（两泳道同文件）= 队长派单失误：FREEZE 新派单，改 Owns 清单，NOTES 记 INCIDENT
 
-## 5. 给用户汇报（ask 格式，规则 12）
+## 5. 给土豆汇报（ask 格式，规则 12）
 
-每选项一行大白话：是什么/为什么重要/选了会怎样/代价；`A1` 应答制；用户原话记 NOTES `OWNER "…"` 行 + 报告 Approvals 表。
+每选项一行大白话：是什么 / 为什么重要 / 选了会怎样 / 代价；`A1` 字母应答制；土豆原话记 NOTES 的 `OWNER "…"` 行 + 报告 Approvals 表。
 
 ## 6. 红线自查（每轮收尾）
 
-- [ ] 队长从未直接改过泳道分支上的产品代码
-- [ ] 所有进 BASE 的合并都过了 validate-ready.sh + 列车门
+- [ ] 我（队长）从未直接改过泳道分支上的产品代码
+- [ ] 所有进 master 的合并都过了 validate-ready.sh + 列车门
 - [ ] NOTES 只追加不改历史
-- [ ] 禁跑层没让任何泳道跑过
+- [ ] win32 层没让任何泳道跑过（规则 15）
 
 
-## 已知边界（2026-11-04 对抗审查后明文接受）
+## 7. 已知边界（2026-11-04 对抗审查后明文接受）
 
-- master/BASE 直改无机械防护（本地仓库无分支保护），明文接受为残余风险；pre-commit 哨兵钩子未排期
-- 部分 CREW 规则靠自觉（自证行/Owns 核查/端口裁决等），机械化方向记 backlog
-- 「拦截泳道危险命令」的 terminal.send 防呆未实现（crew-kit-hook 只做 workspace.create.after），记 backlog
+- **master 直改无机械防护**：任何会话在主检出直接提交 master 可绕过全部关卡（本地仓库无分支保护）。已明文接受为残余风险；纪律并入 master 后编外会话至少知情。未来可加 pre-commit 哨兵钩子（未排期）。
+- **六条规则靠自觉**：CREW 规则 1（自证行）/4（Owns 核查）/13（端口裁决）/15（win32 禁跑）/16（偏离即报）暂无机械校验，依赖泳道自觉 + 队长报告核查。逐步机械化的方向已记 runbook 外的 backlog。
+- **插件 README 曾描述失实**（terminal.send 守卫未实现）已于 2026-11-04 重写为真实行为；「拦截泳道危险命令」的机械防呆记 backlog。
