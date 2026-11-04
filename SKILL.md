@@ -21,10 +21,12 @@ description: >-
 
 | 场景 | 动作 |
 |---|---|
-| 新项目要跑泳道（用户说「装配泳道」「开 crew」） | 按 [bootstrap.md](bootstrap.md) 走装配流程（约 10 分钟） |
+| 新项目要跑泳道（用户说「装配泳道」「开 crew」） | **先走 [bootstrap.md](bootstrap.md) 的装配前守卫**（查重→查免疫→问一句），通过后装配（约 10 分钟） |
 | 你是队长（CONTROLLER，工位 A 主 agent） | 读项目盘 `captain-runbook.md` 执行派单/收单/列车 |
 | 你是泳道（任务书含 `Lane:` 行） | 读所在仓库根 `AGENTS.md` + 项目盘 `CREW.md`，按铁律干活 |
 | 收到 READY 块要验证 | `bash <项目盘>/bin/validate-ready.sh <ready文件>` |
+
+**触发词命中 ≠ 开工施工。** 用户随口提到「新项目」/「并行」时：已有 crew 盘 → 接手不重装；有「不装配」拍板记录 → 永不再问；都没有 → 问一句再动。用户拒绝后记入 decisions.md，本项目永久免疫。
 
 ## 设计不变量（改任何文件前必读）
 
