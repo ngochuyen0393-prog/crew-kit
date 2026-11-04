@@ -22,7 +22,7 @@ Scope: <干什么，一段话；验收标准写清楚>
 2. 向 CONTROLLER 交 READY 块（templates/READY.md 格式）
 3. 写 <DRIVE>/reports/<code>.md（templates/report.md 格式）
 
-永不：merge/rebase 进 master、碰别的泳道分支、抢 9121 端口（规则13）、READY 后继续 push。
+永不：merge/rebase 进 master、碰别的泳道分支、抢独占资源（按 CREW PORTS 参数与对应 Crew-specific 规则裁决）、READY 后继续 push。
 ```
 
 ## 填写要点（CONTROLLER 备忘）
