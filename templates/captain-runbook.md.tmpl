@@ -80,31 +80,32 @@ orca worktree create --name <任务名> --parent-worktree active --agent claude 
 前置：READY 数 ≥1 且队长判断可发车。
 
 ```bash
-# ⓪ 发车前重验（只验本列车槽位——入选存档挪 <DRIVE>/handoffs/train-<n>/ 再逐个 validate；撤槽须 NOTES 记账 + DIGEST 更新）
-for f in <DRIVE>/handoffs/train-<n>/ready-*.txt; do bash <DRIVE>/bin/validate-ready.sh "$f" <DRIVE> || 撤该槽并记账; done
+# ⓪ 发车前重验（只验本列车槽位——入选存档挪 DRIVE/handoffs/train-<n>/ 再逐个 validate；撤槽须 NOTES 记账 + DIGEST 更新）
+for f in DRIVE/handoffs/train-<n>/ready-*.txt; do bash DRIVE/bin/validate-ready.sh "$f" DRIVE || 撤该槽并记账; done
 
-# ① 建 scratch 列车工作区（--detach 检出 BASE 快照：git 禁止同一分支双 worktree 检出，主检出常占 BASE，不带 --detach 必 fatal）
+# ① 建 scratch 列车工作区（--detach 检出 master 快照：git 禁止同一分支双 worktree 检出，主检出正占着 master，不带 --detach 必 fatal；残留清理内建容错）
 git -C <REPO_PATH> worktree remove <TRAIN_WT> --force 2>/dev/null || true
 git -C <REPO_PATH> worktree add --detach <TRAIN_WT> <BASE>
-BASE_AT_GATE="$(git -C <REPO_PATH> rev-parse <BASE>)"   # ④ 前复查漂移
+BASE_AT_GATE="$(git -C D:/projects/live-cockpit rev-parse <BASE>)"   # ④ 前复查漂移
 
 # ② 按 DIGEST 顺序逐槽并入 READY 的 pin SHA（不合分支名！冻结后 pin 之外的任何新头一律不上车）
-cd <TRAIN_WT> && git merge --no-ff <pin1.sha40> && git merge --no-ff <pin2.sha40> …
+cd <TRAIN_WT>
+git merge --no-ff <pin1.sha40> && git merge --no-ff <pin2.sha40> && git merge --no-ff <pin3.sha40>
 
-# ③ 列车头跑一次全量门（FULL_GATE_CHECK，一次顶全部槽位）
+# ②.5 交货关卡：列车头对 master..列车头 diff 跑 /review（in-diff 范围）——发现问题打回涉事槽位重建（NOTES 记一行 + DIGEST 状态更新）
+#     （本地无远端无 PR，gstack /ship 原义不适用；本地等价 = 列车门全量测试 + ②.5 审查 + ④ 落库后 NOTES 记录）
+
+# ③ 列车头跑一次全量门（REQUIRED_CHECKS，一次顶全部槽位）
 <全量检查命令>
 
-# ②.5 交货关卡：列车头对 BASE..列车头 diff 跑 /review（in-diff 范围）——发现问题打回涉事槽位重建
-#     （无远端时 gstack /ship 原义不适用；本地等价 = 列车门全量测试 + ②.5 审查 + ④ 落库后 NOTES 记录）
-
-# ②.5 交货关卡：BASE..列车头 diff 跑 /review——打回涉事槽位重建（NOTES 记账 + DIGEST 更新）
-# ③ 全量门后 → ④ 落库：主检出一次性合并「列车头 SHA」（永不合分支名；BASE 漂移则重跑门）
-[ "$(git -C <REPO_PATH> rev-parse <BASE>)" = "$BASE_AT_GATE" ] || { 重跑门; }
+# ④ 落库：主检出一次性合并「列车头 SHA」（整列已过 ②.5 与 ③；BASE 漂移则重跑门）
+[ "$(git -C D:/projects/live-cockpit rev-parse <BASE>)" = "$BASE_AT_GATE" ] || { 重跑门; }
 git -C <REPO_PATH> merge --no-ff <列车头SHA>
 
-# ⑤ 红了 → 二分：去嫌疑槽位重建重跑门，最多一次；仍红 → FREEZE 记 INCIDENT，涉事槽打回，其余可先落
+# ⑤ 红了 → 二分：去掉嫌疑槽位重建列车重跑门；最多重建一次
+#    仍红 → FREEZE（NOTES 记 INCIDENT），涉事槽位打回泳道，其余槽位可先落
 
-# ⑥ 收尾
+# ⑥ 收尾：销毁列车工作区
 git -C <REPO_PATH> worktree remove <TRAIN_WT> --force
 ```
 
