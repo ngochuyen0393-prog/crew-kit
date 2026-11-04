@@ -1,0 +1,27 @@
+%% 泳道状态机 · live-cockpit crew（AI 与人双消费）
+%% 配套：CREW.md 规则 5/6/18、runbook §2/§3。
+%% 状态流转铁律：READY 后冻结头（违规=作废重交）；打回双路径（存活打回/销毁重派）。
+stateDiagram-v2
+    s0: 派单
+    s1: 施工
+    s2: 待验证（READY 已交，头已冻结）
+    s3: 验证中（validate-ready.sh）
+    s4: 已上车（pin 入本车槽位）
+    s5: 列车门（⓪重验+②.5审查+③全量门）
+    s6: 已落库（master）
+    s7: 已打回
+    x1: 作废（冻结违规/重派替代）
+
+    [*] --> s0: 队长派单（监督式或移交式）
+    s0 --> s1: 工人 onboarded 自证
+    s1 --> s2: REQUIRED_CHECKS 全绿 + 交 READY
+    s2 --> s3: CONTROLLER 收单
+    s3 --> s1: REJECT（存活→打回重交）
+    s3 --> x1: REJECT（已销毁→重派替代，存档作废）
+    s3 --> s4: READY-VALID
+    s4 --> s5: 发车（⓪ 本车槽位重验通过）
+    s5 --> s6: 全绿 + BASE 未漂移
+    s5 --> s5: 红→二分重建（最多一次）
+    s5 --> s1: FREEZE（涉事槽打回泳道）
+    s6 --> [*]: 通知泳道 / 工作区退役
+    s1 --> [*]: 只读泳道（交付报告，无 READY）
