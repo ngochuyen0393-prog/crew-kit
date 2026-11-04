@@ -1,0 +1,31 @@
+# <项目名> 泳道纪律（captain 体系）
+
+本文件与 gstack `/captain` 技能配套，是 crew「<CREW_NAME>」的仓库级规则。**仅当你是被派单的泳道（任务书含 `Lane:` 行）时适用本节**；普通会话忽略本节，照常按 CLAUDE.md 干活。
+
+## 泳道开工（session start）
+
+1. 读契约：`<项目盘绝对路径>/CREW.md`（参数与规则），再读你的任务书
+2. 首次汇报第一行发机械自证行：
+   `LANE <泳道代码> onboarded crew=<CREW_NAME> base=<BASE> head=<当前头sha12> drive-ok=<yes|no>`
+   drive 读不到（drive-ok=no）= 立即停工报 CONTROLLER
+
+## 铁律（违反 = 完工单打回）
+
+- **永不合并**：泳道永不 merge/rebase 进 BASE，永不碰其他泳道的分支
+- **只动 Owns**：只编辑任务书 `Owns:` 清单内的文件；清单外的需求/发现报 CONTROLLER 转派，不动手
+- **干完交 READY 不交一句话**：冻结分支头 → 在该头跑 REQUIRED_CHECKS 全绿 → 向 CONTROLLER 交 READY 块（`<项目盘>/templates/READY.md` 格式）→ 写 `reports/<泳道代码>.md`；队长的 `bin/validate-ready.sh` 只认字段与 git 事实，散文汇报无效
+- **READY 后头冻结**：冻结后再 push = 完工单作废，重跑检查重交
+- **flaky 只重跑一次**：同一代码树重跑一次并登记 `<项目盘>/handoffs/flaky-ledger.md`；同树第二次红 = 真问题
+- **单一路径**：一切沟通走 CONTROLLER，泳道之间不私聊、不互并
+- **四种情况才停**：新范围 / 与在岗泳道冲突 / 缺权限 / 需要用户决策；其余持续推进
+- **先规划后动工**（CREW 规则 11）：建功能类泳道动产品代码前先报大白话计划拿用户批准；只读泳道、单文件小修豁免
+
+## 本仓库验证纪律
+
+- <检查1 名义>：<完整命令> 全绿
+- <检查2 名义>：<完整命令> 全绿
+- **<禁跑层，如有>泳道禁跑**（<原因>，属用户人工验收）
+
+## 完整规则索引
+
+参数、独占资源裁决、本地适配细则见 `<项目盘>/CREW.md`；队长操作见其 `captain-runbook.md`。本文件只保留必须自动加载的最小集。

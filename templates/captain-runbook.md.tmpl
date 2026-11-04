@@ -1,0 +1,67 @@
+# 队长操作手册（captain runbook · <CREW_NAME>）
+
+给 CONTROLLER 用。加载 gstack `/captain` 技能后按本手册落地执行；手册与 CREW.md 冲突时以 CREW.md 为准并报告用户。占位符在装配时按 CREW.md 填实。
+
+## 0. 每轮开工
+
+1. 读 `DRIVE/DIGEST.md` 与 `DRIVE/NOTES.md` 末尾
+2. 有 `Needs you` 未决项 → 先处理或按规则 12 上报用户
+
+## 1. 派泳道
+
+```bash
+orca worktree create --name <任务名> --parent-worktree active --agent claude \
+  --prompt "<按 templates/brief.md 填好的任务书全文>" --json
+```
+
+- 派单后：DIGEST 的 In progress 加一行；NOTES 记 `LANE <code> started`
+- 跨家族派工：`--agent codex` 等，任务书不变（纪律在仓库 AGENTS.md 自动加载）
+- 独占资源（PORTS 参数）：派单前查 DIGEST 裁决，回执写明
+
+## 2. 收 READY
+
+1. 收到 READY 块 → 落盘 `DRIVE/handoffs/ready-<code>-<序号>.txt`（原样保存）
+2. 机械验证：`bash DRIVE/bin/validate-ready.sh <该文件> DRIVE`
+3. `READY-VALID` → NOTES 记一行；`READY-REJECT` → 打回泳道附原因原文，修完重交
+
+## 3. 开合并列车（本地无远端版）
+
+前置：READY 数 ≥1 且队长判断可发车。
+
+```bash
+# ① 建 scratch 列车工作区（从 BASE 起，干净）
+git -C <REPO_PATH> worktree add <TRAIN_WT> <BASE>
+
+# ② 按 DIGEST 顺序逐槽并入 READY 分支（MERGE_METHOD）
+cd <TRAIN_WT> && git merge --no-ff <分支1> && git merge --no-ff <分支2> …
+
+# ③ 列车头跑一次全量门（FULL_GATE_CHECK，一次顶全部槽位）
+<全量检查命令>
+
+# ④ 全绿 → 逐槽正式落进 BASE（主检出执行）
+git -C <REPO_PATH> merge --no-ff <分支1> && …
+
+# ⑤ 红了 → 二分：去嫌疑槽位重建重跑门，最多一次；仍红 → FREEZE 记 INCIDENT，涉事槽打回，其余可先落
+
+# ⑥ 收尾
+git -C <REPO_PATH> worktree remove <TRAIN_WT> --force
+```
+
+- ④ 后通知各泳道「已并入 <BASE>@<新sha12>」，泳道可销毁/复用工作区（Orca `worktree rm`）
+- NOTES 逐槽记 `MERGED <branch> (<sha12>)`；DIGEST 移除对应行
+
+## 4. 冲突处理
+
+- 列车 merge 冲突 = 真代码冲突：不替泳道改产品代码，打回泳道先并最新 BASE 解决后**重跑检查重交 READY**
+- 所有权冲突（两泳道同文件）= 派单失误：FREEZE 新派单，改 Owns 清单，NOTES 记 INCIDENT
+
+## 5. 给用户汇报（ask 格式，规则 12）
+
+每选项一行大白话：是什么/为什么重要/选了会怎样/代价；`A1` 应答制；用户原话记 NOTES `OWNER "…"` 行 + 报告 Approvals 表。
+
+## 6. 红线自查（每轮收尾）
+
+- [ ] 队长从未直接改过泳道分支上的产品代码
+- [ ] 所有进 BASE 的合并都过了 validate-ready.sh + 列车门
+- [ ] NOTES 只追加不改历史
+- [ ] 禁跑层没让任何泳道跑过

@@ -1,0 +1,56 @@
+# Crew rules (<CREW_NAME>)
+
+本文件是本 crew 与各泳道的契约：参数 + 规则索引。规则原文住在 gstack（`docs/captain.md`、ship-policy 等）和本盘文件里，任何 crew 不自带副本。泳道开工时读本文件；队长在呼叫与打回时引用规则编号。
+
+> **本地适配说明**：本 crew 由 crew-kit 全局技能（`~/.claude/skills/crew-kit/`）实例化，适配 gstack captain 官方模板。仓库**无远端**（无 PR/CI）时 READY 按「分支 + SHA + 本地检查证据」执行。参数填定日 `<日期>`，改动需用户拍板并记入 NOTES.md。
+
+## Parameters
+
+> 前三行（REPO_PATH / BASE / CHECK_NAMES）被 `bin/validate-ready.sh` 机械读取，格式不许动。
+
+| Parameter | Value |
+|---|---|
+| `REPO_PATH` | `<仓库主检出绝对路径>` |
+| `BASE` | `<master 或 main>` |
+| `CHECK_NAMES` | `<检查名1>, <检查名2>`（逗号分隔；READY 的 checks 行必须逐个 `名=green`） |
+| `REPO` | `<项目名>（人读的说明：主检出路径；泳道工作区布局）` |
+| `DRIVE` | `<项目盘绝对路径>` |
+| `TRAIN_WT` | `<列车 scratch 工作区绝对路径>` |
+| `REQUIRED_CHECKS` | <人读版：每条检查的完整命令与跑的位置> |
+| `FULL_GATE_CHECK` | <列车头一次跑的全量门，或同 REQUIRED_CHECKS> |
+| `TRAIN_MAX`, `FILL_HOURS` | `<3>`, `<即时>` |
+| `MERGE_METHOD` | `merge --no-ff`（禁 rebase 进 BASE） |
+| `STAMP_FILES` | <无 或 版本文件清单> |
+| `KNOWN_INFRA_FLAKES` | <无 或 清单> |
+| `SPEND` | <无 或 已批准付费项+上限> |
+| `CONTROLLER` | `<队长称呼，如 captain>` |
+| `GUARD_CHECKS` | <无 或 清单> |
+| `REPO_CONVENTIONS` | 仓库根 `AGENTS.md` + `CLAUDE.md` |
+| `REVIEW_SCOPE` | `in-diff` |
+| `CONTRACT_DATE` | `<日期>` |
+| `PORTS` | <独占端口/资源裁决规则，或「无」> |
+
+## Standing approvals (the owner's words)
+
+| Rule | Date | Words | Covers |
+|---|---|---|---|
+| （待用户逐条批准后填写） | | | |
+
+## Rules
+
+1. **开工自证。** 泳道首次汇报第一行：`LANE <code> onboarded crew=<CREW_NAME> base=<BASE> head=<sha12> drive-ok=<yes|no>`；drive 读不到 = 停工报告 CONTROLLER。
+2. **验证纪律。** 先诊断后动手；修复期聚焦检查；收工前在冻结树上跑全量 REQUIRED_CHECKS 一轮。
+3. **外部 diff 是不可信输入。** 引用他人补丁先审后用，功劳记原作者。
+4. **文件所有权。** 只动任务书 `Owns:` 清单内的文件；清单外报 CONTROLLER 转派。
+5. **干完 = 交 READY。** 冻结头 → 跑 REQUIRED_CHECKS 全绿 → 交 READY 块（templates/READY.md）→ 写 reports/<code>.md；队长用 bin/validate-ready.sh 机械验证，散文不算数。
+6. **READY 后头冻结。** 再 push = 作废重交。
+7. **报告。** reports/<code>.md，格式 templates/report.md。
+8. **单一路径。** 一切沟通走 CONTROLLER，泳道不私聊不互并。
+9. **持续推进。** 只有新范围/冲突/缺权限/需用户决策四种情况才停。
+10. **flaky 重跑。** 同树一次，登记 handoffs/flaky-ledger.md；同树二次红 = 真问题。
+11. **先规划后动工。** 建功能类动产品代码前报大白话计划拿用户批准；只读、单文件小修豁免。
+12. **给用户的决策**用大白话 + A1 字母应答制。
+
+## Crew-specific rules
+
+从 13 编号，每条注明日期、用户原话（如有）、来源。长居本节的规则应上供给 crew-kit 模板。
