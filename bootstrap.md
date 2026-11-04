@@ -31,6 +31,7 @@
 8. **验证器实测**：用仓库当前分支真实 SHA 造合法 READY 块 → 必须 `READY-VALID`；再伪造 2-3 种（砍短 SHA / 改 pin / 树哈希谎报）→ 必须全部 `READY-REJECT` 且原因正确。**不实测不算装配完成**
 9. **提交仓库侧**（AGENTS.md + CLAUDE.md 指路），提交信息中文 + `By CC.` 署名
 10. **回写项目知识库**：decisions.md 记定案（装配日期/盘路径/否决项），progress.md 更新
+11. **拆除装配引导**：项目根 CLAUDE.md 若含 `crew-kit-ask` 标记块（crew-kit-hook 插件所埋）→ 移除（文件仅含引导则整删）
 
 ## 提醒
 
@@ -38,6 +39,3 @@
 - 有远端（PR/CI）的项目：本套无远端适配不适用，回归 gstack 原版 captain 流程，别硬套
 - 模板升级：改本技能 templates/ 后，已有项目盘**不自动跟随**（实例自包含）；下次装配才带上新模板
 
-## 11. 拆除装配引导（装了 crew-kit-hook 插件的项目）
-
-装配完成后，检查项目根 `CLAUDE.md`：若含 `crew-kit-ask` 标记块（crew-kit-hook 插件埋的装配询问）→ 移除该块（文件仅含引导则删除整文件）。crew 盘的存在已是查重依据，引导完成使命。
