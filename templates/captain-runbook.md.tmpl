@@ -2,6 +2,46 @@
 
 给 CONTROLLER 用。加载 gstack `/captain` 技能后按本手册落地执行；手册与 CREW.md 冲突时以 CREW.md 为准并报告用户。占位符在装配时按 CREW.md 填实。
 
+## ⓪ 双框架统筹流程（superpowers × gstack，2026-11-04 定）
+
+> 思路来源：Paretofilm/superpowers-gstack（路由与交接仪式）＋ 本地泳道适配。分工哲学：**战略评审前置，组织归泳道，手艺归 superpowers，关卡归 gstack。**
+
+```
+需求磨清（superpowers /brainstorming 或 gstack /office-hours 任一，先到先跑不重复）
+  ↓ 结论落盘 docs/plans/（做什么 + 做成什么样）
+★ 战略评审（gstack /autoplan 或 /plan-eng-review）——「应不应该做？值不值得？」★ 必须在拆任务之前
+  ↓ 通过
+技术精炼 + 拆解（superpowers /writing-plans → TDD 任务清单）→ 计划落盘
+  ↓
+队长按任务拆泳道派工（每张任务书内注明主导手艺：gstack 或 superpowers，单一主导防混巢）
+  ↓ 工人施工（带 TDD 纪律）
+READY → validate → 列车 → /review 关卡 → /ship
+```
+
+**交接仪式（阶段边界强制）**：落盘关键决策 → 建议 `/clear` 清脑 → 新会话喂话模板：
+「从 <计划/设计文档路径> 原样采纳，只管 <本阶段>」。
+小项目豁免（<5 任务或 <30 分钟）：免战略评审、免 /clear、免子代理。
+
+**路由映射表**：
+
+| 情形 | 用谁 |
+|---|---|
+| 需求模糊/新项目开工 | superpowers brainstorming（先手）或 gstack /office-hours（要更狠的挑战时）——二选一 |
+| 方案值得多视角拷问 | gstack /autoplan（战略评审，拆任务之前） |
+| 编码中发现 bug | superpowers /systematic-debugging |
+| QA/生产发现的 bug | gstack /investigate |
+| 代码完成 | gstack /review（交货关卡，永不跳过） |
+| 要真浏览器验证 | gstack /qa |
+| 涉登录/支付/数据安全 | gstack /cso |
+| 琐碎改动（<200 行） | 直接干，免全套 |
+
+**防混巢硬规则**：
+- 同一阶段内不混跑两家的技能（先定主导再开工）
+- 不同框架的子代理永不嵌套
+- 文件领地：superpowers 的计划/spec 放 `docs/superpowers/`；gstack 状态归 `~/.gstack/`；crew 状态归项目盘——三家产物不混放
+
+**计划保真**（实现偏离计划时）：**在偏离的同一提交里修计划**——替换被取代的段落（不在下面追加修正），保留放弃原因，延期项必须带触发条件。「描述没人造过的东西的计划比没计划更糟：过期是被动的，自信地错误是主动伤害。」（源自 Paretofilm plan-fidelity，思路借用）
+
 ## 0. 每轮开工
 
 1. 读 `DRIVE/DIGEST.md` 与 `DRIVE/NOTES.md` 末尾
