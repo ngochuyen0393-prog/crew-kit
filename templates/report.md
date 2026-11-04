@@ -1,6 +1,6 @@
 # <泳道代码>: <标题>
 
-泳道收工时写：`D:/projects/live-cockpit-crew/reports/<泳道代码>.md`。CONTROLLER 读报告先于读聊天。
+泳道收工时写：`<DRIVE>/reports/<泳道代码>.md`。CONTROLLER 读报告先于读聊天。
 
 ## Outcome
 
