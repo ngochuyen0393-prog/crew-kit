@@ -6,7 +6,7 @@
 
 派工前先答：**「这个活需要结果回到我这里吗？」** 需要 → 监督式（`orca orchestration worker-start`，工人发 worker_done，Orca 唤醒队长，零轮询）；不需要 → 移交式（`orca worktree create --prompt`，派完即忘不等待）。反例：要报告的活误用移交式会被迫挂轮询补坑。
 
-## ⓪ 双框架统筹流程（superpowers × gstack，2026-11-04 定）
+## S0 双框架统筹流程（superpowers × gstack，2026-11-04 定）
 
 > 思路来源：Paretofilm/superpowers-gstack（路由与交接仪式）＋ 本地泳道适配。分工哲学：**战略评审前置，组织归泳道，手艺归 superpowers，关卡归 gstack。**
 
@@ -76,11 +76,13 @@ orca worktree create --name <任务名> --parent-worktree active --agent claude 
 前置：READY 数 ≥1 且队长判断可发车。
 
 ```bash
-# ⓪ 发车前逐槽重验（防冻结后再 push）：
-for f in <DRIVE>/handoffs/ready-*.txt; do bash <DRIVE>/bin/validate-ready.sh "$f" <DRIVE> || 撤该槽; done
+# ⓪ 发车前重验（只验本列车槽位——入选存档挪 <DRIVE>/handoffs/train-<n>/ 再逐个 validate；撤槽须 NOTES 记账 + DIGEST 更新）
+for f in <DRIVE>/handoffs/train-<n>/ready-*.txt; do bash <DRIVE>/bin/validate-ready.sh "$f" <DRIVE> || 撤该槽并记账; done
 
-# ① 建 scratch 列车工作区（从 BASE 起，干净；上次残留先清：git -C <REPO_PATH> worktree remove <TRAIN_WT> --force）
-git -C <REPO_PATH> worktree add <TRAIN_WT> <BASE>
+# ① 建 scratch 列车工作区（--detach 检出 BASE 快照：git 禁止同一分支双 worktree 检出，主检出常占 BASE，不带 --detach 必 fatal）
+git -C <REPO_PATH> worktree remove <TRAIN_WT> --force 2>/dev/null || true
+git -C <REPO_PATH> worktree add --detach <TRAIN_WT> <BASE>
+BASE_AT_GATE="$(git -C <REPO_PATH> rev-parse <BASE>)"   # ④ 前复查漂移
 
 # ② 按 DIGEST 顺序逐槽并入 READY 的 pin SHA（不合分支名！冻结后 pin 之外的任何新头一律不上车）
 cd <TRAIN_WT> && git merge --no-ff <pin1.sha40> && git merge --no-ff <pin2.sha40> …
@@ -91,8 +93,10 @@ cd <TRAIN_WT> && git merge --no-ff <pin1.sha40> && git merge --no-ff <pin2.sha40
 # ②.5 交货关卡：列车头对 BASE..列车头 diff 跑 /review（in-diff 范围）——发现问题打回涉事槽位重建
 #     （无远端时 gstack /ship 原义不适用；本地等价 = 列车门全量测试 + ②.5 审查 + ④ 落库后 NOTES 记录）
 
-# ④ 全绿 → 逐槽正式落进 BASE（主检出执行）
-git -C <REPO_PATH> merge --no-ff <分支1> && …
+# ②.5 交货关卡：BASE..列车头 diff 跑 /review——打回涉事槽位重建（NOTES 记账 + DIGEST 更新）
+# ③ 全量门后 → ④ 落库：主检出一次性合并「列车头 SHA」（永不合分支名；BASE 漂移则重跑门）
+[ "$(git -C <REPO_PATH> rev-parse <BASE>)" = "$BASE_AT_GATE" ] || { 重跑门; }
+git -C <REPO_PATH> merge --no-ff <列车头SHA>
 
 # ⑤ 红了 → 二分：去嫌疑槽位重建重跑门，最多一次；仍红 → FREEZE 记 INCIDENT，涉事槽打回，其余可先落
 
