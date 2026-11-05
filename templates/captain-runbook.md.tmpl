@@ -93,6 +93,7 @@ cd <TRAIN_WT>
 git merge --no-ff <pin1.sha40> && git merge --no-ff <pin2.sha40> && git merge --no-ff <pin3.sha40>
 
 # ②.5 交货关卡：列车头对 master..列车头 diff 跑 /review（in-diff 范围）——发现问题打回涉事槽位重建（NOTES 记一行 + DIGEST 状态更新）
+#     验收矩阵闸：槽位涉改需求有 docs/qa/acceptance-matrix.md 时，其 P0 人工验收项须全 Pass 才准入槽（矩阵不存在则豁免，不倒查旧活）
 #     （本地无远端无 PR，gstack /ship 原义不适用；本地等价 = 列车门全量测试 + ②.5 审查 + ④ 落库后 NOTES 记录）
 
 # ③ 列车头跑一次全量门（REQUIRED_CHECKS，一次顶全部槽位）

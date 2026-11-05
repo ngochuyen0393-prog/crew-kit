@@ -10,7 +10,7 @@ Owns: <本泳道可编辑的文件/目录清单；清单外一律报 CONTROLLER>
 Do not touch: <其他在岗泳道的文件，逐条列>
 Plan: required | exempt: <豁免理由，见 CREW.md 规则11>
 Scope: <干什么，一段话>
-Acceptance: <验收用例先行——需求清洗后即写 Given-When-Then 验收清单（或自动化用例骨架），作为战略评审对象与最终验收闸；评审定稿后细化为完整自动化测试>
+Acceptance: <验收矩阵先行——需求清洗后 AI 按八维清单（正常流程/空态兜底/网络异常/输入校验/边界值/状态转换/连点防抖/多角色）出测试矩阵草案，OWNER 逐格拍板（要测=一句话用例，前置/操作→预期具体到数据；不测=必写理由）；红线全绿（未定=0、异常+边界占比≥30%、无理由不测=0）后导出清单落 docs/qa/acceptance-matrix.md，作为战略评审对象与验收锚；可自动化项流入 TDD，人工验收 P0 项全 Pass 才准发车>
 
 开工四步：
 0. 环境初始化：按仓库约定装依赖（如 `uv sync` / `cd shell && npm install`）——REQUIRED_CHECKS 依赖它们，裸依赖跑检查必红
